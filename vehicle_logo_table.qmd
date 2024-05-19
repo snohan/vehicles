@@ -1,0 +1,148 @@
+---
+format: 
+  html:
+    self-contained: true
+knitr: 
+  opts_chunk: 
+    echo: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE
+  )
+
+library(tidyverse)
+library(gt)
+library(gtExtras)
+```
+
+
+```{r data, include=FALSE}
+#| label: data
+#| include: false
+
+vehicle_brands_norway <-
+  readRDS(
+    "C:/Users/snohan/Desktop/vehicle_brand_counts.rds"
+  )
+
+common_vehicle_brands_norway <-
+  vehicle_brands_norway |> 
+  dplyr::filter(
+    n >= 1000
+  ) |> 
+  dplyr::arrange(
+    vehicle_brand
+  ) |> 
+  # Removing brands not likely to be seen
+  dplyr::filter(
+    !(vehicle_brand %in% c(
+      "SMART",
+      "ZETOR",
+      "MCCORMICK",
+      "CARTHAGO",
+      "ADRIA",
+      "RAPIDO",
+      "CHALLENGER",
+      "DETHLEFFS",
+      "CAPRON",
+      "CASE",
+      "BURSTNER",
+      "HYMER",
+      # Results in 50
+      # removing some more, those we seldom saw
+      # Target 42, 6x7 table
+      "POLARIS",
+      "DODGE",
+      "SSANGYONG",
+      "SAAB",
+      "SEAT",
+      "ALFA ROMEO",
+      "CHEVROLET",
+      "IVECO"
+    ))
+  )
+
+# Logos
+logo_folder <- 
+  "C:/Users/snohan/Documents/R-prosjekter/car_logos"
+
+list_logos <-
+  list.files(logo_folder)
+
+# Brands and logos
+common_vehicles <-
+  tibble::tibble(
+    name = list_logos,
+    path = paste0(logo_folder, "/", name)
+  ) |> 
+  dplyr::mutate(
+    name = stringr::str_replace(name, ".png", ""),
+    vehicle_brand = stringr::str_to_upper(name)
+  ) |> 
+  dplyr::full_join(
+    common_vehicle_brands_norway,
+    by = "vehicle_brand"
+  ) |> 
+  dplyr::filter(
+    !is.na(n)
+  )
+```
+
+
+```{r}
+#| label: table
+#| warning: false
+
+dplyr::bind_cols(
+  common_vehicles$path[1:6],
+  common_vehicles$path[7:12],
+  common_vehicles$path[13:18],
+  common_vehicles$path[19:24],
+  common_vehicles$path[25:30],
+  common_vehicles$path[31:36],
+  common_vehicles$path[37:42]
+) |> 
+  t() |> 
+  tibble::as_tibble() |> 
+  gt::gt() |> 
+  gt::tab_header(
+    "Bilmerker"
+  ) |> 
+  gt::fmt_image(
+    width = 80
+  ) |> 
+  # gtExtras::gt_img_rows(
+  #     columns = "V1",
+  #     height = 80
+  # ) |> 
+  #   gtExtras::gt_img_rows(
+  #     columns = "V2",
+  #     height = 80
+  # ) |> 
+  #   gtExtras::gt_img_rows(
+  #     columns = "V3",
+  #     height = 80
+  # ) |> 
+  #   gtExtras::gt_img_rows(
+  #     columns = "V4",
+  #     height = 80
+  # ) |> 
+  #   gtExtras::gt_img_rows(
+  #     columns = "V5",
+  #     height = 80
+  # ) |>
+  #   gtExtras::gt_img_rows(
+  #     columns = "V6",
+  #     height = 80
+  # ) |>
+  gt::cols_align("center") |> 
+  gt::cols_width(
+    everything() ~ px(130)
+  )
+```
